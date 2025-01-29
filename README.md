@@ -10,11 +10,15 @@ The project is organized into the following files:
 *   `browser.py`: Handles the setup and management of the Selenium WebDriver. This includes launching a browser instance and quitting the driver when complete.
 *   `extractor.py`: Contains functions to extract specific data from the Airbnb webpage, like the `data-bootstrap` element, the categories, listing cards, etc.
 *   `main.py`: Serves as the entry point for the scraper. It orchestrates the process, calling functions from other modules.
+* `requirements.txt`: Contains a list of dependencies for the project.
 
 ## Requirements
 
 *   Python 3.6+
-*   Selenium: `pip install selenium`
+*   Selenium (and other dependencies): Install using `pip`:
+    ```bash
+    pip install -r requirements.txt
+    ```
 *   ChromeDriver: Download the appropriate version for your Chrome browser and place it in the same directory as your python script.
 
 ## Usage
@@ -25,10 +29,10 @@ The project is organized into the following files:
     cd Scraper/airbnb_scraper
     ```
 2.  **Install dependencies:**
-   ```bash
-     pip install selenium
+     ```bash
+     pip install -r requirements.txt
     ```
-3.  **Set up ChromeDriver:** Ensure you have `chromedriver` (or the appropriate driver for your browser) in the `airbnb_scraper` directory or specify the path to your chromedriver using absolute path inside `config.py`
+3.  **Set up ChromeDriver:** Ensure you have `chromedriver` (or the appropriate driver for your specific browser) in the `airbnb_scraper` directory or specify the path to your chromedriver using absolute path inside `config.py`
 4.  **Run the scraper:**
     ```bash
     python main.py
