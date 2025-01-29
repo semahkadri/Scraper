@@ -1,4 +1,3 @@
-# main.py
 """Main script to scrape data from Airbnb."""
 
 from browser import setup_driver, close_driver

@@ -1,4 +1,3 @@
-# extractor.py
 """Logic for extracting data from the Airbnb page."""
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
