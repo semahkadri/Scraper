@@ -6,6 +6,7 @@ from selenium.common.exceptions import TimeoutException
 import json
 from config import TIMEOUT_SECONDS
 
+
 def extract_data_bootstrap(driver):
     """Extract the data-bootstrap attribute
 
@@ -48,6 +49,7 @@ def extract_categories(driver):
         print(f"Error extracting categories: {e}")
         return []
 
+
 def extract_listing_cards_data(driver):
     """Extract data from all listing cards on the Airbnb page.
 
@@ -58,26 +60,42 @@ def extract_listing_cards_data(driver):
         list : A list of dictionaries each containing data of one listing card.
     """
     try:
-      WebDriverWait(driver, TIMEOUT_SECONDS).until(
+        WebDriverWait(driver, TIMEOUT_SECONDS).until(
         EC.presence_of_all_elements_located((By.XPATH, '//div[@data-testid="card-container"]'))
       )
-      listing_elements = driver.find_elements(By.XPATH, '//div[@data-testid="card-container"]')
-      listings_data=[]
+        listing_elements = driver.find_elements(By.XPATH, '//div[@data-testid="card-container"]')
+        listings_data=[]
 
-      for listing_element in listing_elements:
-        title_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-title"]').text
-        host_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-subtitle"]/span[1]').text
-        date_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-subtitle"]/span[2]').text
-        price_element = listing_element.find_element(By.XPATH,'.//span[@class="_11jcbg2"]').text
+        for listing_element in listing_elements:
+            title_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-title"]').text
+            host_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-subtitle"]/span[1]').text
+            date_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-subtitle"]/span[2]').text
+            price_element = listing_element.find_element(By.XPATH,'.//span[@class="_11jcbg2"]').text
 
-        listings_data.append({
-            "title": title_element,
-            "host": host_element,
-            "dates": date_element,
-            "price": price_element
+            listings_data.append({
+                "title": title_element,
+                "host": host_element,
+                "dates": date_element,
+                "price": price_element
         })
-      return listings_data
+        return listings_data
 
     except Exception as e:
         print(f"Error extracting listings data: {e}")
         return []
+def find_next_page_button(driver):
+     """
+     Find next page button if exist.
+
+     Args:
+        driver (selenium.webdriver.chrome.webdriver.WebDriver): The Selenium WebDriver.
+    Returns:
+        selenium.webdriver.remote.webelement.WebElement: next button element
+     """
+
+     try:
+         next_page_button = driver.find_element(By.CSS_SELECTOR,'button[aria-label="Page suivante des catégories"]')
+         return next_page_button
+     except Exception as e:
+         print(f"Could not find next page button {e}")
+         return None
