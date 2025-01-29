@@ -1,4 +1,4 @@
-# extractor.py
+
 """Logic for extracting data from the Airbnb page."""
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
@@ -39,21 +39,20 @@ def extract_categories(driver):
     Returns:
         list: A list of category texts.
     """
-    categories = [] # Initialize categories list to handle cases where no categories are found
-
+    categories = []
     try:
         WebDriverWait(driver, TIMEOUT_SECONDS).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'button[role="radio"][name="categoryScroller"]'))
         )
         categories_elements = driver.find_elements(By.CSS_SELECTOR, 'button[role="radio"][name="categoryScroller"]')
         categories = [category.text for category in categories_elements]
-        print(f"Successfully extracted {len(categories)} categories.") # Log success
-    except TimeoutException: # Catch specific TimeoutException
-        print("Timeout: Categories not found within the given time.")
-    except Exception as e: # Catch any other potential exceptions
-        print(f"Error extracting categories: {e}")
+        print(f"Successfully extracted {len(categories)} categories.")  
+    except TimeoutException:
+        print("Timeout: Categories not found within the given time.") 
+    except Exception as e:
+        print(f"Error extracting categories: {e}") 
 
-    return categories # Return categories list, even if empty
+    return categories
 
 
 def extract_listing_cards_data(driver):
@@ -91,23 +90,15 @@ def extract_listing_cards_data(driver):
         return []
 
 def find_next_page_button(driver):
-     """
-     Find next page button if exist.
-
-     Args:
-        driver (selenium.webdriver.chrome.webdriver.WebDriver): The Selenium WebDriver.
-    Returns:
-        selenium.webdriver.remote.webelement.WebElement: next button element
-     """
+     """Find next page button if exist."""
      try:
         next_page_button = WebDriverWait(driver, TIMEOUT_SECONDS).until(
-            EC.element_to_be_clickable((By.CSS_SELECTOR,'button[aria-label="Page suivante des catégories"]'))
+            EC.element_to_be_clickable((By.XPATH, '//nav[@aria-label="Pagination"]/a[last()]'))
         )
-
         return next_page_button
-     except TimeoutException: # Catch TimeoutException specifically
+     except TimeoutException:
          print("Timeout: Next page button not found within the given time.")
          return None
-     except Exception as e: # Catch any other exceptions
+     except Exception as e:
          print(f"Error finding next page button: {e}")
          return None
