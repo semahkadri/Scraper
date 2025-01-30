@@ -1,5 +1,4 @@
-"""Logic for extracting data from the Airbnb page, handling translation pop-up."""
-
+"""Logic for extracting data from the Airbnb page."""
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -41,7 +40,7 @@ def extract_categories(driver):
 
 
 def extract_listing_cards_data(driver):
-    """Extract data from listing cards, excluding description."""
+    """Extract data from listing cards, now including PDP URLs."""
     try:
         WebDriverWait(driver, TIMEOUT_SECONDS).until(
             EC.presence_of_all_elements_located((By.XPATH, '//div[@data-testid="card-container"]'))
@@ -75,29 +74,27 @@ def extract_listing_cards_data(driver):
 
 
 def extract_listing_description(driver):
-    """Extracts the 'À propos de ce logement' description, handling translation pop-up."""
+    """Extracts the 'À propos de ce logement' description, using provided class name."""
     description_text = "Description not found"
     try:
         try:
             popup_close_button = WebDriverWait(driver, 5).until(
-                EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Fermer"]')) 
+                EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Fermer"]'))
             )
             popup_close_button.click()
-            print("Translation pop-up dismissed.") 
+            print("Translation pop-up dismissed.")
         except TimeoutException:
-            print("Translation pop-up not found, proceeding without dismissing.") 
-
+            print("Translation pop-up not found, proceeding without dismissing.")
 
         WebDriverWait(driver, TIMEOUT_SECONDS).until(
-            EC.presence_of_element_located((By.CLASS_NAME, 'l1h825yc'))
+            EC.presence_of_element_located((By.CLASS_NAME, 'd1isfkwk')) 
         )
-        description_element = driver.find_element(By.CLASS_NAME, 'l1h825yc')
+        description_element = driver.find_element(By.CLASS_NAME, 'd1isfkwk') 
         description_text = description_element.text
 
-
     except TimeoutException:
-        print("Timeout: Description not found on listing detail page (after pop-up handling).")
-    except NoSuchElementException: 
+        print("Timeout: Description not found on listing detail page.")
+    except NoSuchElementException:
         print("NoSuchElementException: Description element not found.")
     except Exception as e:
         print(f"Error extracting description from listing page: {e}")
@@ -111,7 +108,7 @@ def find_next_page_button(driver):
         next_page_button = WebDriverWait(driver, TIMEOUT_SECONDS).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Page suivante des catégories"]'))
         )
-        return next_button
+        return next_page_button
      except TimeoutException:
          print("Timeout: Next page button not found within the given time.")
          return None
