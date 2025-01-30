@@ -51,7 +51,6 @@ def extract_listing_cards_data(driver):
         for listing_element in listing_elements:
             title_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-title"]').text
             host_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-subtitle"]/span[1]').text
-            date_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-subtitle"]/span[2]').text
             price_element = listing_element.find_element(By.XPATH,'.//span[@class="_11jcbg2"]').text
             image_element = listing_element.find_element(By.XPATH, './/picture/img')
             image_url = image_element.get_attribute('src')
@@ -61,7 +60,6 @@ def extract_listing_cards_data(driver):
             listings_data.append({
                 "title": title_element,
                 "host": host_element,
-                "dates": date_element,
                 "price": price_element,
                 "image_url": image_url,
                 "listing_url": listing_url

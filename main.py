@@ -1,5 +1,6 @@
-"""Main script to scrape Airbnb data with listing descriptions."""
-
+import os
+import json
+import requests
 from browser import setup_driver, close_driver
 from extractor import extract_categories, extract_listing_cards_data, extract_data_bootstrap, find_next_page_button, extract_listing_description
 from config import CATEGORY_URL, TIME_SLEEP_SECONDS
@@ -9,6 +10,31 @@ from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.common.by import By
 
+OUTPUT_DIR = "listings"
+
+def save_listing(listing):
+    """Save listing data in a folder with its title."""
+    title = listing["title"].replace("/", "-").replace("\\", "-").strip()  
+    folder_path = os.path.join(OUTPUT_DIR, title)
+
+    os.makedirs(folder_path, exist_ok=True)
+
+    # Save listing details
+    json_path = os.path.join(folder_path, "details.json")
+    with open(json_path, "w", encoding="utf-8") as f:
+        json.dump(listing, f, ensure_ascii=False, indent=4)
+
+    image_url = listing.get("image_url")
+    if image_url:
+        image_path = os.path.join(folder_path, "image.jpg")
+        try:
+            response = requests.get(image_url, stream=True)
+            response.raise_for_status()
+            with open(image_path, "wb") as img_file:
+                for chunk in response.iter_content(1024):
+                    img_file.write(chunk)
+        except Exception as e:
+            print(f"Failed to download image for {title}: {e}")
 
 def main():
     """Main function to orchestrate the scraping process with pagination."""
@@ -33,28 +59,26 @@ def main():
 
         for listing in listings_data:
             listing_url = listing['listing_url']
-            listing_data_with_description = {}
+            listing_data_with_description = listing.copy()
+
             try:
                 driver.execute_script("window.open('', '_blank');")  
                 driver.switch_to.window(driver.window_handles[1])  
                 driver.get(listing_url)  
                 description = extract_listing_description(driver)  
-                listing_data_with_description = listing.copy()
                 listing_data_with_description['description'] = description  
 
             except TimeoutException:
-                listing_data_with_description = listing.copy()
                 listing_data_with_description['description'] = "Description not loaded (Timeout)"
                 print(f"Timeout loading description for: {listing_url}")
             except Exception as e:
-                listing_data_with_description = listing.copy()
-                listing_data_with_description['description'] =  f"Description not loaded (Error: {e})"
+                listing_data_with_description['description'] = f"Description not loaded (Error: {e})"
                 print(f"Error loading description for: {listing_url} - {e}")
             finally:
                 all_listings_data.append(listing_data_with_description)
+                save_listing(listing_data_with_description)  
                 driver.close()  
                 driver.switch_to.window(driver.window_handles[0])  
-
 
         next_button = find_next_page_button(driver)
         if not next_button:
@@ -71,7 +95,6 @@ def main():
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, '//div[@data-testid="card-container"][1]'))
             )
-
 
             print(f"Navigated to page {page_num + 1} successfully.")
             page_num += 1
@@ -91,7 +114,7 @@ def main():
                 break
 
         except ElementClickInterceptedException as e:
-                print(f"ElementClickInterceptedException catched {e} breaking the loop")
+                print(f"ElementClickInterceptedException caught {e}, breaking the loop")
                 break
         except TimeoutException as e:
             print(f"Timeout during page navigation, ending pagination. {e}")
@@ -100,14 +123,8 @@ def main():
             print(f"An unexpected error occurred during pagination: {e}")
             break
 
-    print("\nAll Listing Cards Data (Including Descriptions):")
-    for i, listing in enumerate(all_listings_data):
-        print(f" Listing {i+1}:")
-        for key, value in listing.items():
-            print(f"  {key}: {value}")
-
+    print("\nAll Listing Cards Data (Including Descriptions) saved in folders.")
     close_driver(driver)
-
 
 if __name__ == "__main__":
     main()
