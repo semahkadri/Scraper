@@ -1,7 +1,7 @@
-"""Main script to scrape Airbnb data with pagination."""
+"""Main script to scrape Airbnb data with listing descriptions."""
 
 from browser import setup_driver, close_driver
-from extractor import extract_categories, extract_listing_cards_data, extract_data_bootstrap, find_next_page_button
+from extractor import extract_categories, extract_listing_cards_data, extract_data_bootstrap, find_next_page_button, extract_listing_description
 from config import CATEGORY_URL, TIME_SLEEP_SECONDS
 import time
 from selenium.common.exceptions import StaleElementReferenceException, ElementClickInterceptedException, TimeoutException
@@ -20,7 +20,8 @@ def main():
     print(data_bootstrap)
 
     categories = extract_categories(driver)
-    print("\nExtracted categories:", categories)
+    print("\nExtracted categories:")
+    print(categories)
 
     page_num = 1
     while True:
@@ -29,10 +30,33 @@ def main():
         if not listings_data:
             print("No listings found on this page, ending scraping.")
             break
-        all_listings_data.extend(listings_data)
+
+        for listing in listings_data:
+            listing_url = listing['listing_url']
+            listing_data_with_description = {}
+            try:
+                driver.execute_script("window.open('', '_blank');")  
+                driver.switch_to.window(driver.window_handles[1])  
+                driver.get(listing_url)  
+                description = extract_listing_description(driver)  
+                listing_data_with_description = listing.copy()
+                listing_data_with_description['description'] = description  
+
+            except TimeoutException:
+                listing_data_with_description = listing.copy()
+                listing_data_with_description['description'] = "Description not loaded (Timeout)"
+                print(f"Timeout loading description for: {listing_url}")
+            except Exception as e:
+                listing_data_with_description = listing.copy()
+                listing_data_with_description['description'] =  f"Description not loaded (Error: {e})"
+                print(f"Error loading description for: {listing_url} - {e}")
+            finally:
+                all_listings_data.append(listing_data_with_description)
+                driver.close()  
+                driver.switch_to.window(driver.window_handles[0])  
+
 
         next_button = find_next_page_button(driver)
-
         if not next_button:
             print("No Next Button Found - End of Pagination")
             break
@@ -47,6 +71,7 @@ def main():
             WebDriverWait(driver, 20).until(
                 EC.presence_of_element_located((By.XPATH, '//div[@data-testid="card-container"][1]'))
             )
+
 
             print(f"Navigated to page {page_num + 1} successfully.")
             page_num += 1
@@ -75,7 +100,7 @@ def main():
             print(f"An unexpected error occurred during pagination: {e}")
             break
 
-    print("\nAll Listing Cards Data (Including Image URLs):") 
+    print("\nAll Listing Cards Data (Including Descriptions):")
     for i, listing in enumerate(all_listings_data):
         print(f" Listing {i+1}:")
         for key, value in listing.items():
