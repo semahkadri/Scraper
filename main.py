@@ -38,16 +38,15 @@ def main():
             break
 
         try:
-            WebDriverWait(driver, 20).until(EC.visibility_of_element_located((By.CSS_SELECTOR, 'button[aria-label="Page suivante des catégories"]')))
-            WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Page suivante des catégories"]')))
-
-            driver.execute_script("arguments[0].scrollIntoView(true);", next_button)
-            time.sleep(2) 
+            WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Page suivante des catégories"]')))
             next_button.click()
 
-
-            WebDriverWait(driver, 30).until(EC.title_contains("Paris - Logements"))
-
+            WebDriverWait(driver, 20).until(
+                EC.staleness_of(driver.find_element(By.XPATH, '//div[@data-testid="card-container"][1]'))
+            )
+            WebDriverWait(driver, 20).until(
+                EC.presence_of_element_located((By.XPATH, '//div[@data-testid="card-container"][1]'))
+            )
 
             print(f"Navigated to page {page_num + 1} successfully.")
             page_num += 1
@@ -56,9 +55,9 @@ def main():
             print("StaleElementReferenceException, trying to find next button again...")
             next_button = find_next_page_button(driver)
             if next_button:
-                WebDriverWait(driver, 20).until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Page suivante des catégories"]')))
+                WebDriverWait(driver, 10).until(EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Page suivante des catégories"]')))
                 next_button.click()
-                WebDriverWait(driver, 30).until(
+                WebDriverWait(driver, 20).until(
                     EC.presence_of_element_located((By.XPATH, '//div[@data-testid="card-container"][1]'))
                 )
                 page_num += 1
@@ -76,7 +75,7 @@ def main():
             print(f"An unexpected error occurred during pagination: {e}")
             break
 
-    print("\nAll Listing Cards Data:")
+    print("\nAll Listing Cards Data (Including Image URLs):") 
     for i, listing in enumerate(all_listings_data):
         print(f" Listing {i+1}:")
         for key, value in listing.items():
