@@ -96,7 +96,7 @@ def extract_listing_description(driver):
     return description_text
 
 def extract_listing_photos(driver):
-    """Extract all photos from a listing detail page."""
+    """Extract all lodging photos from a listing detail page, excluding host images."""
     photos = []
     try:
         try:
@@ -105,29 +105,36 @@ def extract_listing_photos(driver):
             )
             gallery_button.click()
         except TimeoutException:
-            print("Could not open photo gallery, trying to get visible photos only.")
-            
+            print("Could not open photo gallery; falling back to visible photos only.")
+        
         WebDriverWait(driver, TIMEOUT_SECONDS).until(
-            EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'picture img'))
+            EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'img.i1ezuexe'))
         )
         
-        photo_elements = driver.find_elements(By.CSS_SELECTOR, 'picture img')
+        photo_elements = driver.find_elements(By.CSS_SELECTOR, 'img.i1ezuexe')
         
         for photo in photo_elements:
+            alt_text = photo.get_attribute('alt') or ""
+            if "Profil utilisateur" in alt_text:
+                continue
             photo_url = photo.get_attribute('src')
-            if photo_url and photo_url not in photos:  
+            if photo_url and photo_url not in photos:
                 photos.append(photo_url)
+                
+        if photos:
+            photos = photos[:-1]
                 
         try:
             close_button = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Close"]')
             close_button.click()
-        except:
+        except Exception:
             pass
             
     except Exception as e:
         print(f"Error extracting photos: {e}")
     
     return photos
+
 
 def extract_listing_comments(driver):
     """Extract all comments from a listing detail page using the 'r1bctolv' class."""
