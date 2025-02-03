@@ -8,7 +8,9 @@ from extractor import (
     extract_data_bootstrap, 
     find_next_page_button, 
     extract_listing_description,
-    extract_listing_photos
+    extract_listing_photos,
+    extract_listing_comments,
+    extract_listing_rating  
 )
 from config import CATEGORY_URL, TIME_SLEEP_SECONDS
 import time
@@ -90,11 +92,15 @@ def main():
                 print(f"Extracting details for: {listing['title']}")
                 description = extract_listing_description(driver)  
                 all_photos = extract_listing_photos(driver)
-                
+                comments = extract_listing_comments(driver)
+                rating = extract_listing_rating(driver)  
+
                 listing_data_with_description['description'] = description
                 listing_data_with_description['all_photos'] = all_photos
+                listing_data_with_description['comments'] = comments
+                listing_data_with_description['rating'] = rating
                 
-                print(f"Found {len(all_photos)} photos for listing: {listing['title']}")
+                print(f"Found {len(all_photos)} photos, {len(comments)} comments, and rating: {rating} for listing: {listing['title']}")
 
             except TimeoutException:
                 listing_data_with_description['description'] = "Description not loaded (Timeout)"
@@ -156,7 +162,7 @@ def main():
             print(f"An unexpected error occurred during pagination: {e}")
             break
 
-    print("\nScraping completed. All listings data and photos have been saved.")
+    print("\nScraping completed. All listings data, photos, comments, and ratings have been saved.")
     close_driver(driver)
 
 if __name__ == "__main__":

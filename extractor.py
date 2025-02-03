@@ -45,9 +45,9 @@ def extract_listing_cards_data(driver):
         listings_data = []
 
         for listing_element in listing_elements:
-            title_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-title"]').text
-            host_element = listing_element.find_element(By.XPATH,'.//div[@data-testid="listing-card-subtitle"]/span[1]').text
-            price_element = listing_element.find_element(By.XPATH,'.//span[@class="_11jcbg2"]').text
+            title_element = listing_element.find_element(By.XPATH, './/div[@data-testid="listing-card-title"]').text
+            host_element = listing_element.find_element(By.XPATH, './/div[@data-testid="listing-card-subtitle"]/span[1]').text
+            price_element = listing_element.find_element(By.XPATH, './/span[@class="_11jcbg2"]').text
             image_element = listing_element.find_element(By.XPATH, './/picture/img')
             main_image_url = image_element.get_attribute('src')
             card_link_element = listing_element.find_element(By.XPATH, './/a[@aria-labelledby]')
@@ -128,6 +128,29 @@ def extract_listing_photos(driver):
         print(f"Error extracting photos: {e}")
     
     return photos
+
+def extract_listing_comments(driver):
+    """Extract all comments from a listing detail page using the 'r1bctolv' class."""
+    comments = []
+    try:
+        comment_elements = driver.find_elements(By.CLASS_NAME, "r1bctolv")
+        comments = [comment.text.strip() for comment in comment_elements if comment.text.strip()]
+    except Exception as e:
+        print(f"Error extracting comments: {e}")
+    return comments
+
+def extract_listing_rating(driver):
+    """Extracts the rating from the listing detail page using the updated HTML structure."""
+    rating = "Rating not found"
+    try:
+        rating_container = WebDriverWait(driver, TIMEOUT_SECONDS).until(
+            EC.presence_of_element_located((By.CSS_SELECTOR, 'div[data-testid="pdp-reviews-highlight-banner-host-rating"]'))
+        )
+        rating_element = rating_container.find_element(By.CSS_SELECTOR, "div[aria-hidden='true']")
+        rating = rating_element.text.strip()
+    except Exception as e:
+        print(f"Error extracting rating: {e}")
+    return rating
 
 def find_next_page_button(driver):
     """Find next page button if it exists."""
