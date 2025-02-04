@@ -10,7 +10,8 @@ from extractor import (
     extract_listing_description,
     extract_listing_photos,
     extract_listing_comments,
-    extract_listing_rating  
+    extract_listing_rating,
+    extract_listing_location
 )
 from config import CATEGORY_URL, TIME_SLEEP_SECONDS
 import time
@@ -90,7 +91,9 @@ def main():
                 driver.get(listing_url)  
                 
                 print(f"Extracting details for: {listing['title']}")
-                description = extract_listing_description(driver)  
+                description = extract_listing_description(driver) 
+                location = extract_listing_location(driver)
+ 
                 all_photos = extract_listing_photos(driver)
                 comments = extract_listing_comments(driver)
                 rating = extract_listing_rating(driver)  
@@ -99,8 +102,9 @@ def main():
                 listing_data_with_description['all_photos'] = all_photos
                 listing_data_with_description['comments'] = comments
                 listing_data_with_description['rating'] = rating
+                listing_data_with_description['location'] = location
                 
-                print(f"Found {len(all_photos)} photos, {len(comments)} comments, and rating: {rating} for listing: {listing['title']}")
+                print(f"Found {len(all_photos)} photos,{location} as location, {len(comments)} comments, and rating: {rating} for listing: {listing['title']}")
 
             except TimeoutException:
                 listing_data_with_description['description'] = "Description not loaded (Timeout)"

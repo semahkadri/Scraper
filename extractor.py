@@ -59,13 +59,35 @@ def extract_listing_cards_data(driver):
                 "price": price_element,
                 "main_image_url": main_image_url,
                 "listing_url": listing_url,
-                "all_photos": []  
+                "all_photos": [],  
+                "location": "Location not found" 
+
             })
         return listings_data
 
     except Exception as e:
         print(f"Error extracting listings card data: {e}")
         return []
+    
+def extract_listing_location(driver):
+    """Extracts the location of the listing."""
+    location_text = "Location not found"
+    try:
+        location_selectors = ['.s1qk96pm', '._1t2xqmi']
+        for selector in location_selectors:
+            try:
+                location_element = WebDriverWait(driver, 5).until(
+                    EC.presence_of_element_located((By.CSS_SELECTOR, selector))
+                )
+                location_text = location_element.text.strip()
+                if location_text:
+                    break
+            except TimeoutException:
+                continue
+    except Exception as e:
+        print(f"Error extracting location: {e}")
+
+    return location_text
 
 def extract_listing_description(driver):
     """Extracts the 'À propos de ce logement' description."""
