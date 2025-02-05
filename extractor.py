@@ -59,16 +59,15 @@ def extract_listing_cards_data(driver):
                 "price": price_element,
                 "main_image_url": main_image_url,
                 "listing_url": listing_url,
-                "all_photos": [],  
-                "location": "Location not found" 
-
+                "all_photos": [],
+                "location": "Location not found"
             })
         return listings_data
 
     except Exception as e:
         print(f"Error extracting listings card data: {e}")
         return []
-    
+
 def extract_listing_location(driver):
     """Extracts the location of the listing."""
     location_text = "Location not found"
@@ -86,7 +85,6 @@ def extract_listing_location(driver):
                 continue
     except Exception as e:
         print(f"Error extracting location: {e}")
-
     return location_text
 
 def extract_listing_description(driver):
@@ -114,7 +112,6 @@ def extract_listing_description(driver):
         print("NoSuchElementException: Description element not found.")
     except Exception as e:
         print(f"Error extracting description from listing page: {e}")
-
     return description_text
 
 def extract_listing_photos(driver):
@@ -128,13 +125,11 @@ def extract_listing_photos(driver):
             gallery_button.click()
         except TimeoutException:
             print("Could not open photo gallery; falling back to visible photos only.")
-        
+
         WebDriverWait(driver, TIMEOUT_SECONDS).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'img.i1ezuexe'))
         )
-        
         photo_elements = driver.find_elements(By.CSS_SELECTOR, 'img.i1ezuexe')
-        
         for photo in photo_elements:
             alt_text = photo.get_attribute('alt') or ""
             if "Profil utilisateur" in alt_text:
@@ -142,21 +137,16 @@ def extract_listing_photos(driver):
             photo_url = photo.get_attribute('src')
             if photo_url and photo_url not in photos:
                 photos.append(photo_url)
-                
         if photos:
             photos = photos[:-1]
-                
         try:
             close_button = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Close"]')
             close_button.click()
         except Exception:
             pass
-            
     except Exception as e:
         print(f"Error extracting photos: {e}")
-    
     return photos
-
 
 def extract_listing_comments(driver):
     """Extract all comments from a listing detail page using the 'r1bctolv' class."""
