@@ -6,7 +6,7 @@ import json
 from config import TIMEOUT_SECONDS
 
 def extract_data_bootstrap(driver):
-    """Extract the data-bootstrap attribute"""
+    """Extract the data-bootstrap attribute."""
     try:
         data_bootstrap_element = driver.find_element(By.ID, 'data-bootstrap')
         if data_bootstrap_element.get_attribute("data-bootstrap") == "true":
@@ -60,7 +60,8 @@ def extract_listing_cards_data(driver):
                 "main_image_url": main_image_url,
                 "listing_url": listing_url,
                 "all_photos": [],
-                "location": "Location not found"
+                "location": "Location not found" 
+  
             })
         return listings_data
 
@@ -85,6 +86,7 @@ def extract_listing_location(driver):
                 continue
     except Exception as e:
         print(f"Error extracting location: {e}")
+
     return location_text
 
 def extract_listing_description(driver):
@@ -112,6 +114,7 @@ def extract_listing_description(driver):
         print("NoSuchElementException: Description element not found.")
     except Exception as e:
         print(f"Error extracting description from listing page: {e}")
+
     return description_text
 
 def extract_listing_photos(driver):
@@ -125,11 +128,13 @@ def extract_listing_photos(driver):
             gallery_button.click()
         except TimeoutException:
             print("Could not open photo gallery; falling back to visible photos only.")
-
+        
         WebDriverWait(driver, TIMEOUT_SECONDS).until(
             EC.presence_of_all_elements_located((By.CSS_SELECTOR, 'img.i1ezuexe'))
         )
+        
         photo_elements = driver.find_elements(By.CSS_SELECTOR, 'img.i1ezuexe')
+        
         for photo in photo_elements:
             alt_text = photo.get_attribute('alt') or ""
             if "Profil utilisateur" in alt_text:
@@ -137,15 +142,19 @@ def extract_listing_photos(driver):
             photo_url = photo.get_attribute('src')
             if photo_url and photo_url not in photos:
                 photos.append(photo_url)
+                
         if photos:
             photos = photos[:-1]
+                
         try:
             close_button = driver.find_element(By.CSS_SELECTOR, 'button[aria-label="Close"]')
             close_button.click()
         except Exception:
             pass
+            
     except Exception as e:
         print(f"Error extracting photos: {e}")
+    
     return photos
 
 def extract_listing_comments(driver):
@@ -172,7 +181,7 @@ def extract_listing_rating(driver):
     return rating
 
 def find_next_page_button(driver):
-    """Find next page button if it exists."""
+    """Find the next page button if it exists."""
     try:
         next_page_button = WebDriverWait(driver, TIMEOUT_SECONDS).until(
             EC.element_to_be_clickable((By.CSS_SELECTOR, 'button[aria-label="Page suivante des catégories"]'))
