@@ -2,6 +2,7 @@ import os
 import json
 import requests
 import time
+import logging
 from selenium.common.exceptions import StaleElementReferenceException, ElementClickInterceptedException, TimeoutException
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
@@ -21,6 +22,18 @@ from extractor import (
   
 )
 from config import CATEGORY_URL, TIME_SLEEP_SECONDS
+
+# Configure logging
+logging.basicConfig(
+    level=logging.DEBUG,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
+    handlers=[
+        logging.FileHandler("scraper.log"),
+        logging.StreamHandler()
+    ]
+)
+
+logger = logging.getLogger(__name__)
 
 OUTPUT_DIR = "listings"
 
@@ -46,7 +59,7 @@ def save_listing(listing):
                 for chunk in response.iter_content(1024):
                     img_file.write(chunk)
         except Exception as e:
-            print(f"Failed to download main image for {title}: {e}")
+            logger.error(f"Failed to download main image for {title}: {e}")
 
     for i, photo_url in enumerate(listing.get("all_photos", []), 1):
         photo_path = os.path.join(photos_path, f"photo_{i}.jpg")
@@ -56,9 +69,9 @@ def save_listing(listing):
             with open(photo_path, "wb") as img_file:
                 for chunk in response.iter_content(1024):
                     img_file.write(chunk)
-            print(f"Successfully downloaded photo {i} for {title}")
+            logger.info(f"Successfully downloaded photo {i} for {title}")
         except Exception as e:
-            print(f"Failed to download photo {i} for {title}: {e}")
+            logger.error(f"Failed to download photo {i} for {title}: {e}")
 
 def main():
     """Main function to orchestrate the scraping process with pagination."""
@@ -67,25 +80,25 @@ def main():
     all_listings_data = []
 
     data_bootstrap = extract_data_bootstrap(driver)
-    print("Data bootstrap extracted:")
-    print(data_bootstrap)
+    logger.info("Data bootstrap extracted:")
+    logger.debug(data_bootstrap)
 
     categories = extract_categories(driver)
-    print("\nExtracted categories:")
-    print(categories)
+    logger.info("Extracted categories:")
+    logger.debug(categories)
 
     append_http_traffic(driver)
 
     page_num = 1
     while True:
-        print(f"\nScraping page: {page_num}")
+        logger.info(f"Scraping page: {page_num}")
         listings_data = extract_listing_cards_data(driver)
         if not listings_data:
-            print("No listings found on this page, ending scraping.")
+            logger.info("No listings found on this page, ending scraping.")
             break
 
         for idx, listing in enumerate(listings_data, 1):
-            print(f"\nProcessing listing {idx} on page {page_num}")
+            logger.info(f"Processing listing {idx} on page {page_num}")
             listing_url = listing['listing_url']
             listing_data_with_description = listing.copy()
 
@@ -94,7 +107,7 @@ def main():
                 driver.switch_to.window(driver.window_handles[1])  
                 driver.get(listing_url)  
                 
-                print(f"Extracting details for: {listing['title']}")
+                logger.info(f"Extracting details for: {listing['title']}")
                 description = extract_listing_description(driver)
                 location = extract_listing_location(driver)
                 all_photos = extract_listing_photos(driver)
@@ -107,15 +120,14 @@ def main():
                 listing_data_with_description['rating'] = rating
                 listing_data_with_description['location'] = location
 
-                
-                print(f"Found {len(all_photos)} photos,{location} as location, {len(comments)} comments, and rating: {rating} for listing: {listing['title']}")
+                logger.info(f"Found {len(all_photos)} photos, {location} as location, {len(comments)} comments, and rating: {rating} for listing: {listing['title']}")
 
             except TimeoutException:
                 listing_data_with_description['description'] = "Description not loaded (Timeout)"
-                print(f"Timeout loading listing details for: {listing_url}")
+                logger.warning(f"Timeout loading listing details for: {listing_url}")
             except Exception as e:
                 listing_data_with_description['description'] = f"Description not loaded (Error: {e})"
-                print(f"Error loading listing details for: {listing_url} - {e}")
+                logger.error(f"Error loading listing details for: {listing_url} - {e}")
             finally:
                 all_listings_data.append(listing_data_with_description)
                 save_listing(listing_data_with_description)  
@@ -126,7 +138,7 @@ def main():
 
         next_button = find_next_page_button(driver)
         if not next_button:
-            print("No Next Button Found - End of Pagination")
+            logger.info("No Next Button Found - End of Pagination")
             break
 
         try:
@@ -142,14 +154,14 @@ def main():
                 EC.presence_of_element_located((By.XPATH, '//div[@data-testid="card-container"][1]'))
             )
 
-            print(f"Navigated to page {page_num + 1} successfully.")
+            logger.info(f"Navigated to page {page_num + 1} successfully.")
             page_num += 1
             time.sleep(TIME_SLEEP_SECONDS)
             
             append_http_traffic(driver)
 
         except StaleElementReferenceException:
-            print("StaleElementReferenceException, trying to find next button again...")
+            logger.warning("StaleElementReferenceException, trying to find next button again...")
             next_button = find_next_page_button(driver)
             if next_button:
                 WebDriverWait(driver, 10).until(
@@ -161,20 +173,20 @@ def main():
                 )
                 page_num += 1
             else:
-                print("No Next Button Found after exception, end pagination.")
+                logger.info("No Next Button Found after exception, end pagination.")
                 break
 
         except ElementClickInterceptedException as e:
-            print(f"ElementClickInterceptedException caught {e}, breaking the loop")
+            logger.error(f"ElementClickInterceptedException caught {e}, breaking the loop")
             break
         except TimeoutException as e:
-            print(f"Timeout during page navigation, ending pagination. {e}")
+            logger.error(f"Timeout during page navigation, ending pagination. {e}")
             break
         except Exception as e:
-            print(f"An unexpected error occurred during pagination: {e}")
+            logger.error(f"An unexpected error occurred during pagination: {e}")
             break
 
-    print("\nScraping completed. All listings data, photos, comments, and ratings have been saved.")
+    logger.info("Scraping completed. All listings data, photos, comments, and ratings have been saved.")
 
     append_http_traffic(driver)
     
